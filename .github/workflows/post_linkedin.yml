@@ -2,9 +2,14 @@ name: Post to LinkedIn
 
 on:
   schedule:
-    - cron: "0 4 * * *"   # 09:00 PKT
-    - cron: "0 13 * * *"  # 18:00 PKT
-  workflow_dispatch: {}
+    - cron: "0 4 * * *"   # 09:00 PKT - posted with an image
+    - cron: "0 13 * * *"  # 18:00 PKT - posted without an image
+  workflow_dispatch:
+    inputs:
+      with_image:
+        description: "Attach an image?"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -21,17 +26,29 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Decide whether to attach an image
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "with_image=${{ github.event.inputs.with_image }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 4 * * *" ]; then
+            echo "with_image=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "with_image=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post next item from content pool
         working-directory: scripts
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_PERSON_URN: ${{ secrets.LINKEDIN_PERSON_URN }}
+          WITH_IMAGE: ${{ steps.decide.outputs.with_image }}
         run: python post_to_linkedin.py
 
       - name: Save rotation state
         run: |
           git config user.name "linkedin-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add state/post_index.txt
-          git diff --cached --quiet || git commit -m "chore: advance post index"
+          git add state/post_index.txt state/image_index.txt
+          git diff --cached --quiet || git commit -m "chore: advance post/image index"
           git push
