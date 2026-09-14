@@ -7,9 +7,9 @@ Required environment variables:
     GMAIL_APP_PASSWORD - Gmail App Password (not your normal password)
 
 Optional:
-    JOB_KEYWORDS  - default: "Frontend Developer JavaScript HTML CSS"
-    JOB_LOCATION  - default: "Pakistan"
-    ALERT_TO      - recipient email, defaults to GMAIL_ADDRESS
+    JOB_KEYWORDS   - default: "Frontend Developer JavaScript HTML CSS"
+    JOB_LOCATIONS  - comma-separated, default: "Pakistan,Remote"
+    ALERT_TO       - recipient email, defaults to GMAIL_ADDRESS
 """
 
 import os
@@ -34,12 +34,24 @@ def fetch_jobs(api_key: str, keywords: str, location: str) -> list[dict]:
     return response.json().get("jobs", [])
 
 
+def dedupe_jobs(jobs: list[dict]) -> list[dict]:
+    seen_links = set()
+    unique = []
+    for job in jobs:
+        link = job.get("link")
+        if link in seen_links:
+            continue
+        seen_links.add(link)
+        unique.append(job)
+    return unique
+
+
 def build_email_body(jobs: list[dict]) -> str:
     if not jobs:
         return "No new matching jobs found today."
 
     lines = [f"Found {len(jobs)} job(s) matching your skills:\n"]
-    for job in jobs[:20]:
+    for job in jobs[:40]:
         title = job.get("title", "Untitled")
         company = job.get("company", "Unknown company")
         location = job.get("location", "")
@@ -66,14 +78,17 @@ def main() -> None:
     to_address = os.environ.get("ALERT_TO", gmail_address)
 
     keywords = os.environ.get("JOB_KEYWORDS", "Frontend Developer JavaScript HTML CSS")
-    location = os.environ.get("JOB_LOCATION", "Pakistan")
+    locations = os.environ.get("JOB_LOCATIONS", "Pakistan,Remote").split(",")
 
-    try:
-        jobs = fetch_jobs(api_key, keywords, location)
-    except requests.RequestException as exc:
-        print(f"Job fetch failed: {exc}", file=sys.stderr)
-        sys.exit(1)
+    all_jobs: list[dict] = []
+    for location in locations:
+        location = location.strip()
+        try:
+            all_jobs.extend(fetch_jobs(api_key, keywords, location))
+        except requests.RequestException as exc:
+            print(f"Job fetch failed for location '{location}': {exc}", file=sys.stderr)
 
+    jobs = dedupe_jobs(all_jobs)
     body = build_email_body(jobs)
     send_email(gmail_address, app_password, to_address, body)
     print(f"Sent job alert email with {len(jobs)} job(s).")
