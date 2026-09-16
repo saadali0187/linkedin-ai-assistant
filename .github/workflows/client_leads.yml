@@ -1,9 +1,12 @@
-name: Daily Client Leads Email
+name: Hourly Client Leads Email
 
 on:
   schedule:
-    - cron: "0 4 * * *"  # 09:00 PKT
+    - cron: "0 * * * *"  # every hour
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   leads:
@@ -24,3 +27,12 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           LEAD_KEYWORDS: "frontend,javascript,html,css,react,c#,.net,asp.net,sql server,mssql"
         run: python client_leads.py
+
+      - name: Save seen-leads state
+        run: |
+          git config user.name "linkedin-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state/seen_leads.txt
+          git diff --cached --quiet || git commit -m "chore: record sent leads"
+          git pull --rebase origin main
+          git push

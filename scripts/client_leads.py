@@ -32,6 +32,10 @@ from html import unescape
 
 import requests
 
+STATE_DIR = os.path.join(os.path.dirname(__file__), "..", "state")
+SEEN_LEADS_FILE = os.path.join(STATE_DIR, "seen_leads.txt")
+MAX_SEEN_LEADS = 1000  # cap file growth; oldest links fall off first
+
 REMOTEOK_URL = "https://remoteok.com/api"
 WWR_RSS_URL = "https://weworkremotely.com/categories/remote-programming-jobs.rss"
 
@@ -127,6 +131,19 @@ def fetch_weworkremotely(keywords: list[str]) -> list[dict]:
     return leads
 
 
+def read_seen_links() -> list[str]:
+    if not os.path.exists(SEEN_LEADS_FILE):
+        return []
+    with open(SEEN_LEADS_FILE, "r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def write_seen_links(links: list[str]) -> None:
+    os.makedirs(os.path.dirname(SEEN_LEADS_FILE), exist_ok=True)
+    with open(SEEN_LEADS_FILE, "w", encoding="utf-8") as f:
+        f.write("\n".join(links[-MAX_SEEN_LEADS:]))
+
+
 def dedupe_leads(leads: list[dict]) -> list[dict]:
     seen_links = set()
     unique = []
@@ -148,10 +165,7 @@ def draft_message(lead: dict, index: int) -> str:
 
 
 def build_email_body(leads: list[dict]) -> str:
-    if not leads:
-        return "No new matching client leads found today."
-
-    lines = [f"Found {len(leads)} potential lead(s) matching your skills:\n"]
+    lines = [f"Found {len(leads)} new lead(s) matching your skills:\n"]
     for i, lead in enumerate(leads[:25]):
         lines.append(f"- {lead['title']} @ {lead['company']}\n  {lead['link']}")
         lines.append(f'  Suggested message:\n  "{draft_message(lead, i)}"\n')
@@ -165,7 +179,7 @@ def build_email_body(leads: list[dict]) -> str:
 
 def send_email(gmail_address: str, app_password: str, to_address: str, body: str) -> None:
     msg = MIMEText(body)
-    msg["Subject"] = "Your daily client leads"
+    msg["Subject"] = "New client leads"
     msg["From"] = gmail_address
     msg["To"] = to_address
 
@@ -198,9 +212,19 @@ def main() -> None:
         print(f"We Work Remotely fetch failed: {exc}", file=sys.stderr)
 
     leads = dedupe_leads(leads)
-    body = build_email_body(leads)
+
+    seen_links = read_seen_links()
+    seen_set = set(seen_links)
+    new_leads = [lead for lead in leads if lead["link"] not in seen_set]
+
+    if not new_leads:
+        print("No new leads since last run -- skipping email.")
+        return
+
+    body = build_email_body(new_leads)
     send_email(gmail_address, app_password, to_address, body)
-    print(f"Sent client leads email with {len(leads)} lead(s).")
+    write_seen_links(seen_links + [lead["link"] for lead in new_leads])
+    print(f"Sent client leads email with {len(new_leads)} new lead(s).")
 
 
 if __name__ == "__main__":

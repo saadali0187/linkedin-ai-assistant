@@ -12,10 +12,12 @@ no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
    Developer / JavaScript / HTML / CSS / C# / .NET / MS SQL jobs in Pakistan
    and remote worldwide (via the Jooble API). No auto-apply — you review and
    apply yourself.
-3. **`client_leads.yml`** — once a day, emails you a digest of freelance/
+3. **`client_leads.yml`** — runs every hour, emails you any *new* freelance/
    contract leads matching your skills (via RemoteOK and We Work Remotely),
    each with a ready-to-copy outreach message draft
-   (`scripts/client_leads.py`). It does **not** send anything automatically —
+   (`scripts/client_leads.py`). Leads already emailed once are tracked in
+   `state/seen_leads.txt` and skipped on later runs, so you don't get the
+   same listing every hour. It does **not** send anything automatically —
    there's no legitimate API for searching strangers' profiles and messaging
    them, and doing that via scraping/bots would violate LinkedIn's terms and
    risk a ban. You review each lead and send the message yourself.
