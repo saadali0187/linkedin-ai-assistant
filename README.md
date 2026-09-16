@@ -1,16 +1,26 @@
-# LinkedIn Auto-Post + Job Alert
+# LinkedIn Auto-Post + Job Alert + Client Leads
 
-Two independent automations, both using official APIs (no scraping, no bots
-that violate LinkedIn's terms):
+Three independent automations, all using official/public APIs (no scraping,
+no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
 
 1. **`post_linkedin.yml`** — posts 2x/day to your LinkedIn feed via LinkedIn's
    official Share API, rotating through pre-written posts in
-   `scripts/content_pool.py`.
+   `scripts/content_pool.py`. Each post gets an image card generated
+   automatically from its text (`scripts/generate_image.py`) — no manual
+   artwork needed.
 2. **`job_alert.yml`** — once a day, emails you a digest of Frontend
-   Developer / JavaScript / HTML / CSS jobs in Pakistan (via the Jooble API).
-   No auto-apply — you review and apply yourself.
+   Developer / JavaScript / HTML / CSS / C# / .NET / MS SQL jobs in Pakistan
+   and remote worldwide (via the Jooble API). No auto-apply — you review and
+   apply yourself.
+3. **`client_leads.yml`** — once a day, emails you a digest of freelance/
+   contract leads matching your skills (via RemoteOK and We Work Remotely),
+   each with a ready-to-copy outreach message draft
+   (`scripts/client_leads.py`). It does **not** send anything automatically —
+   there's no legitimate API for searching strangers' profiles and messaging
+   them, and doing that via scraping/bots would violate LinkedIn's terms and
+   risk a ban. You review each lead and send the message yourself.
 
-Both run on GitHub Actions, so your PC doesn't need to be on.
+All three run on GitHub Actions, so your PC doesn't need to be on.
 
 ---
 
@@ -74,6 +84,9 @@ Go to the **Actions** tab of your repo and enable workflows if prompted.
 You can also trigger each one manually via **Run workflow** to test before
 waiting for the schedule.
 
+`client_leads.yml` reuses the same `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD`
+secrets from step 6 — no extra setup needed.
+
 ---
 
 ## Customizing
@@ -82,13 +95,20 @@ waiting for the schedule.
   any time, the rotation just keeps going.
 - **Post times**: edit the `cron` lines in `.github/workflows/post_linkedin.yml`
   (times are in UTC; PKT = UTC+5).
-- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATION` in
+- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` in
   `.github/workflows/job_alert.yml`.
+- **Client lead keywords**: edit `LEAD_KEYWORDS` in
+  `.github/workflows/client_leads.yml`, and the outreach message wording in
+  `SKILLS_BLURB` / `MESSAGE_TEMPLATES` in `scripts/client_leads.py`.
 
 ## Notes
 
-- LinkedIn auto-apply bots are against LinkedIn's terms and risk account bans
-  — that's why this only does job *alerts* (email), with applying left to you.
+- LinkedIn auto-apply bots (and auto-messaging bots) are against LinkedIn's
+  terms and risk account bans — that's why this only does *alerts* (email),
+  with applying/messaging left to you.
 - The LinkedIn posting here uses LinkedIn's own official API with your
   consent (OAuth), so it does not violate their terms the way scraping/browser
   bots would.
+- There is no legitimate API for searching arbitrary people's profiles and
+  messaging them — `client_leads.yml` only surfaces leads from public job
+  boards and drafts a message for you to send yourself.

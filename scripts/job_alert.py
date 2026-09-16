@@ -7,7 +7,7 @@ Required environment variables:
     GMAIL_APP_PASSWORD - Gmail App Password (not your normal password)
 
 Optional:
-    JOB_KEYWORDS   - default: "Frontend Developer JavaScript HTML CSS"
+    JOB_KEYWORDS   - default: "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
     JOB_LOCATIONS  - comma-separated, default: "Pakistan,Remote"
     ALERT_TO       - recipient email, defaults to GMAIL_ADDRESS
 """
@@ -77,14 +77,26 @@ def main() -> None:
     app_password = os.environ["GMAIL_APP_PASSWORD"]
     to_address = os.environ.get("ALERT_TO", gmail_address)
 
-    keywords = os.environ.get("JOB_KEYWORDS", "Frontend Developer JavaScript HTML CSS")
+    keywords = os.environ.get(
+        "JOB_KEYWORDS", "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
+    )
     locations = os.environ.get("JOB_LOCATIONS", "Pakistan,Remote").split(",")
 
     all_jobs: list[dict] = []
     for location in locations:
         location = location.strip()
+        if location.lower() == "remote":
+            # "Remote" isn't a real place Jooble understands as a location -
+            # leave location blank to search worldwide (Pakistan included)
+            # and push "remote" into the keywords so results are filtered
+            # to remote roles instead.
+            search_location = ""
+            search_keywords = f"{keywords} remote"
+        else:
+            search_location = location
+            search_keywords = keywords
         try:
-            all_jobs.extend(fetch_jobs(api_key, keywords, location))
+            all_jobs.extend(fetch_jobs(api_key, search_keywords, search_location))
         except requests.RequestException as exc:
             print(f"Job fetch failed for location '{location}': {exc}", file=sys.stderr)
 

@@ -1,12 +1,12 @@
-name: Daily Job Alert Email
+name: Daily Client Leads Email
 
 on:
   schedule:
-    - cron: "0 3 * * *"  # 08:00 PKT
+    - cron: "0 4 * * *"  # 09:00 PKT
   workflow_dispatch: {}
 
 jobs:
-  alert:
+  leads:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,12 +17,10 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Send job alert email
+      - name: Send client leads email
         working-directory: scripts
         env:
-          JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          JOB_KEYWORDS: "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
-          JOB_LOCATIONS: "Pakistan,Remote"
-        run: python job_alert.py
+          LEAD_KEYWORDS: "frontend,javascript,html,css,react,c#,.net,asp.net,sql server,mssql"
+        run: python client_leads.py
