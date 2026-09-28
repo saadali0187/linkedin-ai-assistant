@@ -1,5 +1,6 @@
-"""Fetches jobs matching your skills (via the Jooble API) and emails a daily
-digest through Gmail SMTP. No LinkedIn scraping/auto-apply involved.
+"""Fetches jobs matching your skills (via the Jooble API and, optionally, the
+JSearch API which aggregates LinkedIn/Indeed/Glassdoor/etc.) and emails a
+daily digest through Gmail SMTP. No LinkedIn scraping/auto-apply involved.
 
 Required environment variables:
     JOOBLE_API_KEY     - free key from https://jooble.org/api/about
@@ -8,8 +9,11 @@ Required environment variables:
 
 Optional:
     JOB_KEYWORDS   - default: "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
-    JOB_LOCATIONS  - comma-separated, default: "Pakistan,Remote"
+    JOB_LOCATIONS  - comma-separated, default: "Pakistan"
     ALERT_TO       - recipient email, defaults to GMAIL_ADDRESS
+    RAPIDAPI_KEY   - free key from https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+                     enables the JSearch source, which also surfaces LinkedIn
+                     job postings alongside Indeed/Glassdoor/etc.
 """
 
 import os
@@ -20,6 +24,8 @@ from email.mime.text import MIMEText
 import requests
 
 JOOBLE_URL_TEMPLATE = "https://jooble.org/api/{key}"
+JSEARCH_URL = "https://jsearch.p.rapidapi.com/search"
+JSEARCH_HOST = "jsearch.p.rapidapi.com"
 
 
 def fetch_jobs(api_key: str, keywords: str, location: str) -> list[dict]:
@@ -32,6 +38,30 @@ def fetch_jobs(api_key: str, keywords: str, location: str) -> list[dict]:
     )
     response.raise_for_status()
     return response.json().get("jobs", [])
+
+
+def fetch_jobs_jsearch(api_key: str, keywords: str, location: str) -> list[dict]:
+    query = f"{keywords} in {location}" if location else keywords
+    response = requests.get(
+        JSEARCH_URL,
+        headers={"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": JSEARCH_HOST},
+        params={"query": query, "page": "1", "num_pages": "1"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    jobs = []
+    for item in response.json().get("data", []):
+        jobs.append(
+            {
+                "title": item.get("job_title", "Untitled"),
+                "company": item.get("employer_name", "Unknown company"),
+                "location": ", ".join(
+                    part for part in (item.get("job_city"), item.get("job_country")) if part
+                ),
+                "link": item.get("job_apply_link") or item.get("job_google_link", ""),
+            }
+        )
+    return jobs
 
 
 def dedupe_jobs(jobs: list[dict]) -> list[dict]:
@@ -76,11 +106,12 @@ def main() -> None:
     gmail_address = os.environ["GMAIL_ADDRESS"]
     app_password = os.environ["GMAIL_APP_PASSWORD"]
     to_address = os.environ.get("ALERT_TO", gmail_address)
+    rapidapi_key = os.environ.get("RAPIDAPI_KEY", "")
 
     keywords = os.environ.get(
         "JOB_KEYWORDS", "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
     )
-    locations = os.environ.get("JOB_LOCATIONS", "Pakistan,Remote").split(",")
+    locations = os.environ.get("JOB_LOCATIONS", "Pakistan").split(",")
 
     all_jobs: list[dict] = []
     for location in locations:
@@ -98,7 +129,13 @@ def main() -> None:
         try:
             all_jobs.extend(fetch_jobs(api_key, search_keywords, search_location))
         except requests.RequestException as exc:
-            print(f"Job fetch failed for location '{location}': {exc}", file=sys.stderr)
+            print(f"Jooble fetch failed for location '{location}': {exc}", file=sys.stderr)
+
+        if rapidapi_key:
+            try:
+                all_jobs.extend(fetch_jobs_jsearch(rapidapi_key, search_keywords, search_location))
+            except requests.RequestException as exc:
+                print(f"JSearch fetch failed for location '{location}': {exc}", file=sys.stderr)
 
     jobs = dedupe_jobs(all_jobs)
     body = build_email_body(jobs)

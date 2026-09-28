@@ -10,7 +10,8 @@ no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
    artwork needed.
 2. **`job_alert.yml`** — once a day, emails you a digest of Frontend
    Developer / JavaScript / HTML / CSS / C# / .NET / MS SQL jobs in Pakistan
-   and remote worldwide (via the Jooble API). No auto-apply — you review and
+   (via the Jooble API, and optionally the JSearch API which also surfaces
+   LinkedIn/Indeed/Glassdoor postings). No auto-apply — you review and
    apply yourself.
 3. **`client_leads.yml`** — runs every hour, emails you any *new* freelance/
    contract leads matching your skills (via RemoteOK and We Work Remotely),
@@ -65,6 +66,11 @@ This opens your browser to log into LinkedIn and approve access, then prints
 Sign up at https://jooble.org/api/about — takes a minute, gives you an API key
 by email.
 
+### 4b. (Optional) Get a free RapidAPI key for JSearch
+To also pull in LinkedIn/Indeed/Glassdoor job postings, sign up at
+https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch and subscribe to the
+free tier, then copy your RapidAPI key. Skip this if Jooble alone is enough.
+
 ### 5. Create a Gmail App Password
 1. Turn on 2-Step Verification on your Google account (if not already on).
 2. Go to https://myaccount.google.com/apppasswords and create an app password.
@@ -78,6 +84,7 @@ Add:
 | `LINKEDIN_ACCESS_TOKEN` | from step 3 |
 | `LINKEDIN_PERSON_URN` | from step 3 |
 | `JOOBLE_API_KEY` | from step 4 |
+| `RAPIDAPI_KEY` | from step 4b (optional — leave unset to skip JSearch) |
 | `GMAIL_ADDRESS` | your Gmail address |
 | `GMAIL_APP_PASSWORD` | from step 5 |
 

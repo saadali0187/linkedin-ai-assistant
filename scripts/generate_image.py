@@ -119,23 +119,6 @@ def generate_post_image(text: str, output_path: str) -> None:
     image = background.convert("RGB")
     draw = ImageDraw.Draw(image)
 
-    # Label above the card.
-    label_font = _load_font(FONT_BOLD_CANDIDATES, 34)
-    label = "FRONTEND DEV TIP"
-    label_width = draw.textlength(label, font=label_font)
-    draw.text(((CANVAS_SIZE[0] - label_width) / 2, 72), label, font=label_font, fill="#FFFFFF")
-    underline_width = 90
-    draw.rounded_rectangle(
-        (
-            (CANVAS_SIZE[0] - underline_width) / 2,
-            124,
-            (CANVAS_SIZE[0] + underline_width) / 2,
-            130,
-        ),
-        radius=3,
-        fill=theme["accent"],
-    )
-
     # Large decorative quote mark in the corner of the card.
     quote_font = _load_font(FONT_BOLD_CANDIDATES, 180)
     accent_rgb = _hex_to_rgb(theme["accent"])
