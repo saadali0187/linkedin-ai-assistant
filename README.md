@@ -1,29 +1,26 @@
-# LinkedIn Auto-Post + Job Alert + Client Leads
+# LinkedIn Auto-Post + Job Alert
 
-Three independent automations, all using official/public APIs (no scraping,
+Two independent automations, both using official/public APIs (no scraping,
 no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
 
 1. **`post_linkedin.yml`** — posts 2x/day to your LinkedIn feed via LinkedIn's
-   official Share API, rotating through pre-written posts in
-   `scripts/content_pool.py`. Each post gets an image card generated
-   automatically from its text (`scripts/generate_image.py`) — no manual
-   artwork needed.
-2. **`job_alert.yml`** — once a day, emails you a digest of Frontend
-   Developer / JavaScript / HTML / CSS / C# / .NET / MS SQL jobs in Pakistan
-   (via the Jooble API, and optionally the JSearch API which also surfaces
-   LinkedIn/Indeed/Glassdoor postings). No auto-apply — you review and
-   apply yourself.
-3. **`client_leads.yml`** — runs every hour, emails you any *new* freelance/
-   contract leads matching your skills (via RemoteOK and We Work Remotely),
-   each with a ready-to-copy outreach message draft
-   (`scripts/client_leads.py`). Leads already emailed once are tracked in
-   `state/seen_leads.txt` and skipped on later runs, so you don't get the
-   same listing every hour. It does **not** send anything automatically —
-   there's no legitimate API for searching strangers' profiles and messaging
-   them, and doing that via scraping/bots would violate LinkedIn's terms and
-   risk a ban. You review each lead and send the message yourself.
+   official Share API, rotating through pre-written, senior-voice frontend
+   engineering posts in `scripts/content_pool.py`. Each caption ends with a
+   "follow Saad Ali" call-to-action (rotated from `FOLLOW_CTAS` so it doesn't
+   read the same every time). Each post also gets a polished, on-brand image
+   card generated automatically from its text (`scripts/generate_image.py`)
+   — a gradient background, an elevated quote card, and a signature row
+   (initials badge + name + role) so the whole series looks like one
+   consistent personal brand — no manual artwork needed.
+2. **`job_alert.yml`** — once a day, emails you a digest split into two
+   sections: (a) Frontend Developer / JavaScript / HTML / CSS / C# / .NET /
+   MS SQL jobs in Pakistan, and (b) camera/CCTV monitoring jobs, both in
+   Pakistan and worldwide remote — via the Jooble API, and optionally the
+   JSearch API which also surfaces LinkedIn/Indeed/Glassdoor postings. No
+   auto-apply — you review the digest and apply (and send your own CV)
+   yourself.
 
-All three run on GitHub Actions, so your PC doesn't need to be on.
+Both run on GitHub Actions, so your PC doesn't need to be on.
 
 ---
 
@@ -93,31 +90,27 @@ Go to the **Actions** tab of your repo and enable workflows if prompted.
 You can also trigger each one manually via **Run workflow** to test before
 waiting for the schedule.
 
-`client_leads.yml` reuses the same `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD`
-secrets from step 6 — no extra setup needed.
-
 ---
 
 ## Customizing
 
 - **Post content**: edit `scripts/content_pool.py` — add/remove/reorder posts
-  any time, the rotation just keeps going.
+  (`POSTS`) any time, the rotation just keeps going. The follow
+  call-to-action lines live in `FOLLOW_CTAS` in the same file.
+- **Post image branding**: `AUTHOR_NAME` / `AUTHOR_ROLE` / `AUTHOR_INITIALS` /
+  `KICKER_LABEL` at the top of `scripts/generate_image.py` control the name,
+  role, initials badge, and topic pill shown on every card.
 - **Post times**: edit the `cron` lines in `.github/workflows/post_linkedin.yml`
   (times are in UTC; PKT = UTC+5).
-- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` in
-  `.github/workflows/job_alert.yml`.
-- **Client lead keywords**: edit `LEAD_KEYWORDS` in
-  `.github/workflows/client_leads.yml`, and the outreach message wording in
-  `SKILLS_BLURB` / `MESSAGE_TEMPLATES` in `scripts/client_leads.py`.
+- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` (primary skills)
+  and `CAMERA_JOB_KEYWORDS` / `CAMERA_JOB_LOCATIONS` (camera/CCTV monitoring)
+  in `.github/workflows/job_alert.yml`.
 
 ## Notes
 
 - LinkedIn auto-apply bots (and auto-messaging bots) are against LinkedIn's
   terms and risk account bans — that's why this only does *alerts* (email),
-  with applying/messaging left to you.
+  with applying left to you.
 - The LinkedIn posting here uses LinkedIn's own official API with your
   consent (OAuth), so it does not violate their terms the way scraping/browser
   bots would.
-- There is no legitimate API for searching arbitrary people's profiles and
-  messaging them — `client_leads.yml` only surfaces leads from public job
-  boards and drafts a message for you to send yourself.

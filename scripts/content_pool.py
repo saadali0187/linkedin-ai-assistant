@@ -1,38 +1,50 @@
-"""Pool of pre-written LinkedIn posts for a frontend developer (JS/HTML/CSS, 2 yrs experience).
+"""Pool of pre-written LinkedIn posts for a frontend developer (JS/HTML/CSS).
 
-Posts rotate in order (see post_to_linkedin.py). Add more entries any time --
+Written in a senior-engineer voice: a crisp opinion or insight, no filler,
+no "look how experienced I am" framing -- the authority comes from the take
+itself. Posts rotate in order (see post_to_linkedin.py); add more any time,
 the index just keeps advancing and wraps around when it runs out.
+
+Each published post gets one of FOLLOW_CTAS appended to the LinkedIn caption
+only -- the image card (generate_image.py) stays clean and renders just the
+insight, so the visual doesn't get cluttered with the call-to-action.
 """
 
 POSTS = [
-    "One thing I wish I knew earlier as a frontend dev: CSS specificity fights are almost always a sign the selector structure needs rethinking, not a reason to reach for !important.",
-    "Two years into frontend work and the skill that's paid off the most isn't a framework -- it's reading the browser console properly before guessing at fixes.",
-    "Flexbox vs Grid isn't really a debate once you frame it right: Grid for the page layout, Flexbox for the components inside it. Stop fighting one to do the other's job.",
-    "Small habit that's saved me hours: committing in small, working chunks instead of one giant 'finished feature' commit. Debugging a regression is so much easier with a clean history.",
-    "Semantic HTML is underrated. A page built with <button>, <nav>, and <main> instead of div-soup is easier to style, easier to make accessible, and easier for the next dev to read.",
-    "JavaScript tip: array methods like .map, .filter, and .reduce read cleaner than for-loops once they click, but don't force them everywhere -- sometimes a plain loop is the most readable option.",
-    "Excel skills quietly make you a better frontend dev than people expect -- reading a messy spreadsheet of product data and turning it into clean UI logic is a real skill, not a side one.",
-    "Best debugging advice I've gotten: before touching the code, write one sentence describing exactly what you expected to happen and what actually happened. Half the bugs reveal themselves right there.",
-    "CSS custom properties (variables) are one of the most practical upgrades to plain CSS -- theme switching, consistent spacing, and fewer magic numbers scattered across stylesheets.",
-    "Two years in, my biggest lesson about learning frontend dev: build real small projects instead of collecting tutorials. Nothing teaches you like being stuck on your own bug at 11pm.",
-    "A clean, well-organized MS Word document and a clean HTML document have more in common than people think -- structure first, styling second, both make the content easier to maintain.",
-    "Accessibility isn't a 'nice to have' add-on at the end of a project -- alt text, proper labels, and keyboard navigation are much easier to bake in from the start than retrofit later.",
-    "If your JavaScript function needs a comment to explain what it does, it usually needs a better name instead. Comments should explain *why*, not *what*.",
-    "Responsive design tip: design mobile-first. It forces you to prioritize content, and scaling up to desktop is almost always easier than cramming a desktop layout down to mobile.",
-    "The most underrated frontend skill isn't a JS framework -- it's being comfortable enough with plain HTML/CSS/JS that you can debug what the framework is actually doing under the hood.",
-    "Version control tip: branch names and commit messages are documentation too. 'fix stuff' tells the next person (often future you) nothing.",
-    "Working with real client data in Excel before it ever hits a webpage taught me more about handling edge cases -- empty cells, weird formats, duplicates -- than any course did.",
-    "CSS Grid's `fr` unit is one of those small things that once it clicks, you can't imagine building layouts without it.",
-    "Two years of frontend work later, the projects I'm proudest of aren't the flashiest ones -- they're the ones where the UI just quietly worked, fast and bug-free, for real users.",
-    "A good README is an underrated frontend skill. If a teammate can't get your project running in five minutes, that's a UX problem too -- just for developers instead of users.",
-    "JavaScript's `const` and `let` over `var` isn't just a style preference -- block scoping avoids a whole category of bugs that used to be common with `var`.",
-    "One practical habit: keep a personal doc (even just in Word) of every weird bug you've solved and how. Six months later that's your own personal Stack Overflow.",
-    "Frontend tip: test your layouts with real, messy content -- long names, missing images, empty states -- not just the clean placeholder text from the design file.",
-    "Learning to write efficient Excel formulas (VLOOKUP, pivot tables) has made me faster at spotting patterns in data before I even start building the UI for it.",
-    "The gap between 'it works on my machine' and 'it works everywhere' is usually browser differences and screen sizes. Testing early on real devices saves a lot of late fixes.",
-    "CSS transitions on just 2-3 properties (opacity, transform) feel more polished than people expect, and they're cheap performance-wise compared to animating layout properties.",
-    "Two years in, I've learned that asking 'what problem does this solve for the user' before writing a single line of code saves more time than any framework or tool.",
-    "Keeping components small and focused on one job makes JavaScript so much easier to test and reuse later -- it's the same logic as keeping an Excel sheet to one clear purpose.",
-    "HTML forms with proper `label`, `required`, and `type` attributes do a lot of validation work for free, before a single line of JavaScript is even written.",
-    "Documentation habit that's helped me a lot: writing setup notes the moment I finish configuring something new, not 'later' -- later never comes and I forget the details.",
+    "CSS specificity fights are rarely a specificity problem -- they're a sign the selector architecture needs rethinking. Reach for a clearer structure before reaching for !important.",
+    "The highest-leverage debugging skill isn't knowing every DevTools shortcut -- it's reading the error message fully before touching a single line of code. Most bugs tell you exactly where to look.",
+    "Flexbox vs Grid stops being a debate once you split the job correctly: Grid owns the page-level layout, Flexbox owns the components inside it. Using one to force the other's job is where the pain comes from.",
+    "Small, working commits beat one giant 'finished feature' commit every time. A clean history isn't bureaucracy -- it's the fastest way to find a regression six months from now.",
+    "Semantic HTML is a force multiplier, not a nice-to-have. Structure the markup with <button>, <nav>, and <main> instead of div-soup and you get styling, accessibility, and readability for free.",
+    ".map, .filter, and .reduce read cleaner than loops once the pattern clicks -- but readability wins over cleverness. If a plain for-loop communicates intent faster, use the for-loop.",
+    "Before touching the code, write one sentence: what I expected vs what actually happened. Half the bugs I've fixed revealed themselves the moment I wrote that sentence down.",
+    "CSS custom properties are one of the highest-ROI upgrades to plain CSS: one place to manage theme, spacing, and color instead of magic numbers scattered across a dozen files.",
+    "Tutorials teach syntax. Projects teach engineering. Nothing builds real frontend judgment like being stuck on a bug you created yourself at 11pm with no tutorial to follow.",
+    "Accessibility baked in from the first commit costs almost nothing. Accessibility retrofitted after launch costs a rewrite. Alt text, labels, and keyboard navigation are cheapest on day one.",
+    "If a function needs a comment to explain what it does, it usually needs a better name instead. Comments should explain why a decision was made -- never what the code is already saying.",
+    "Design mobile-first, not as a constraint but as a forcing function -- it makes you prioritize content ruthlessly. Scaling up to desktop is almost always easier than compressing a desktop layout down.",
+    "Frameworks come and go. The engineers who stay valuable are the ones comfortable enough in plain HTML/CSS/JS to debug what the framework is actually doing underneath it.",
+    "Branch names and commit messages are documentation. 'fix stuff' tells the next engineer -- often future you -- absolutely nothing about what broke or why.",
+    "The CSS Grid `fr` unit is deceptively simple and genuinely changes how you think about layout. Once it clicks, hardcoded pixel widths start to feel like a workaround.",
+    "The frontend work I'm proudest of was never the flashiest. It's the UI that just quietly works -- fast, stable, boring in the best way -- for real users who never think about it.",
+    "A good README is a frontend skill, not a documentation afterthought. If a teammate can't run your project in five minutes, that's a UX problem -- the user just happens to be another developer.",
+    "`const` and `let` over `var` isn't a style preference, it's a bug-prevention strategy. Block scoping quietly eliminates an entire category of bugs that used to be routine with `var`.",
+    "Keep a running log of every non-trivial bug you've solved and how. Six months later, that log is a better reference than most Stack Overflow threads -- because it's indexed to your own codebase.",
+    "Test layouts with real, ugly content -- long names, missing images, empty states -- not the clean placeholder text from the design file. Design files lie; production data doesn't.",
+    "The gap between 'works on my machine' and 'works everywhere' is almost always browser quirks and screen sizes, not logic errors. Test on real devices early, not the week before launch.",
+    "Animating opacity and transform feels dramatically more polished than people expect -- and it's far cheaper than animating layout properties. Smooth doesn't have to mean expensive.",
+    "Asking 'what problem does this actually solve for the user' before writing a line of code saves more time than any framework, library, or build tool ever will.",
+    "A component with one clear job is easier to test, easier to reuse, and easier to delete later. Scope creep in a component is technical debt with a UI on top.",
+    "Proper `label`, `required`, and `type` attributes handle a surprising amount of form validation before a single line of JavaScript gets written. Native HTML is underrated.",
+    "Write setup notes the moment you finish configuring something new -- not later. Later never comes, and the details you'd swear you'd remember are the first ones you forget.",
+    "The best code reviews aren't about catching syntax issues -- a linter does that. They're about asking 'will the next person understand why this exists,' which no tool can check for you.",
+    "Shipping fast matters, but shipping a page that stays fast matters more. A performance budget set before the first component is built is worth more than any optimization pass after the fact.",
+    "Most state bugs aren't state management bugs -- they're a sign that two unrelated pieces of UI are sharing state that should've been separate from the start.",
+    "Leaving a clear PR description and a short 'why' comment on a tricky piece of logic is a small investment that pays the next engineer -- and often future you -- back tenfold.",
+]
+
+FOLLOW_CTAS = [
+    "If this kind of take is useful, follow Saad Ali for more frontend engineering notes.",
+    "Follow Saad Ali if you want more of this frontend engineering perspective in your feed.",
+    "More breakdowns like this, every week -- follow Saad Ali.",
 ]

@@ -20,7 +20,7 @@ import tempfile
 
 import requests
 
-from content_pool import POSTS
+from content_pool import FOLLOW_CTAS, POSTS
 from generate_image import generate_post_image
 
 STATE_DIR = os.path.join(os.path.dirname(__file__), "..", "state")
@@ -92,17 +92,19 @@ def main() -> None:
     want_image = os.environ.get("WITH_IMAGE", "true").lower() == "true"
 
     post_index = read_index(POST_STATE_FILE) % len(POSTS)
-    text = POSTS[post_index]
+    insight = POSTS[post_index]
+    cta = FOLLOW_CTAS[post_index % len(FOLLOW_CTAS)]
+    caption = f"{insight}\n\n{cta}"
 
     asset_urn = None
     if want_image:
         with tempfile.TemporaryDirectory() as tmp_dir:
             image_path = os.path.join(tmp_dir, "post.png")
-            generate_post_image(text, image_path)
+            generate_post_image(insight, image_path)
             asset_urn = upload_image(access_token, person_urn, image_path)
 
     share_content = {
-        "shareCommentary": {"text": text},
+        "shareCommentary": {"text": caption},
         "shareMediaCategory": "IMAGE" if asset_urn else "NONE",
     }
     if asset_urn:
@@ -127,7 +129,7 @@ def main() -> None:
         print(f"LinkedIn post failed: {response.status_code} {response.text}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Posted index {post_index} (image={asset_urn is not None}): {text[:60]}...")
+    print(f"Posted index {post_index} (image={asset_urn is not None}): {insight[:60]}...")
     write_index(POST_STATE_FILE, post_index + 1)
 
 
