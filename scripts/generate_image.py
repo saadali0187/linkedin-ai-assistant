@@ -1,14 +1,12 @@
 """Generates a branded quote-card PNG from a post's text, so every LinkedIn
 post can carry an image without any hand-picked artwork or paid image API.
 
-Style: a deep gradient background with soft blurred accent shapes, a small
-"kicker" pill labeling the topic, a white elevated card (drop shadow) holding
-the insight, and a signature row (initials badge + name + role) so every card
-reads as a consistent, personal-brand series rather than a one-off quote
-image. Pillow only -- no 3D renderer / paid image API involved.
+Style: one consistent gradient background with soft blurred accent shapes,
+a white elevated card (drop shadow) holding the insight, and a signature row
+(initials badge + "Follow Saad Ali") so every card reads as the same,
+consistent personal-brand series rather than a one-off quote image. Pillow
+only -- no 3D renderer / paid image API involved.
 """
-
-import hashlib
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -17,22 +15,13 @@ MARGIN = 64
 CARD_RADIUS = 36
 CARD_COLOR = (255, 255, 255)
 TEXT_COLOR = (22, 26, 30)
-MUTED_TEXT_COLOR = (255, 255, 255, 200)
 
-AUTHOR_NAME = "Saad Ali"
-AUTHOR_ROLE = "Frontend Developer"
 AUTHOR_INITIALS = "SA"
-KICKER_LABEL = "FRONTEND ENGINEERING"
+FOLLOW_TEXT = "Follow Saad Ali"
 
-# Deeper, more premium gradient themes than a flat brand blue -- rotate
-# deterministically from the post text so re-runs (e.g. workflow retries)
-# render the same card.
-THEMES = [
-    {"top": "#0B1220", "bottom": "#15335C", "accent": "#5EA8FF"},
-    {"top": "#1A0B2E", "bottom": "#4A1D6B", "accent": "#C9A6FF"},
-    {"top": "#111318", "bottom": "#2B2E36", "accent": "#F2C14E"},
-    {"top": "#06211D", "bottom": "#0E4F45", "accent": "#4FE3C6"},
-]
+# Single fixed theme -- every card uses the same background so the series
+# looks consistent instead of jumping between colors post to post.
+THEME = {"top": "#0B1220", "bottom": "#15335C", "accent": "#5EA8FF"}
 
 FONT_BOLD_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -58,11 +47,6 @@ def _load_font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont:
 def _hex_to_rgb(value: str) -> tuple[int, int, int]:
     value = value.lstrip("#")
     return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
-
-
-def _pick_theme(text: str) -> dict:
-    index = int(hashlib.sha256(text.encode()).hexdigest(), 16) % len(THEMES)
-    return THEMES[index]
 
 
 def _vertical_gradient(size: tuple[int, int], top_hex: str, bottom_hex: str) -> Image.Image:
@@ -94,37 +78,19 @@ def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFon
 
 
 def generate_post_image(text: str, output_path: str) -> None:
-    theme = _pick_theme(text)
-    accent_rgb = _hex_to_rgb(theme["accent"])
+    accent_rgb = _hex_to_rgb(THEME["accent"])
 
-    background = _vertical_gradient(CANVAS_SIZE, theme["top"], theme["bottom"]).convert("RGBA")
+    background = _vertical_gradient(CANVAS_SIZE, THEME["top"], THEME["bottom"]).convert("RGBA")
 
     # Soft blurred accent shapes for visual depth.
     decor = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
     decor_draw = ImageDraw.Draw(decor)
-    decor_draw.ellipse([-220, -260, 480, 420], fill=theme["accent"] + "45")
+    decor_draw.ellipse([-220, -260, 480, 420], fill=THEME["accent"] + "45")
     decor_draw.ellipse([760, 780, 1340, 1360], fill="#FFFFFF1F")
     decor = decor.filter(ImageFilter.GaussianBlur(90))
     background = Image.alpha_composite(background, decor)
 
-    draw = ImageDraw.Draw(background)
-
-    # Kicker pill ("FRONTEND ENGINEERING") above the card, for a consistent
-    # topic label across the whole series.
-    kicker_font = _load_font(FONT_BOLD_CANDIDATES, 28)
-    kicker_text = KICKER_LABEL
-    kicker_width = draw.textlength(kicker_text, font=kicker_font)
-    pill_pad_x, pill_pad_y = 28, 16
-    pill_box = (
-        MARGIN,
-        96,
-        MARGIN + kicker_width + 2 * pill_pad_x,
-        96 + 28 + 2 * pill_pad_y,
-    )
-    draw.rounded_rectangle(pill_box, radius=(pill_box[3] - pill_box[1]) // 2, outline=accent_rgb, width=3)
-    draw.text((pill_box[0] + pill_pad_x, pill_box[1] + pill_pad_y - 2), kicker_text, font=kicker_font, fill=accent_rgb)
-
-    card_box = (MARGIN, 212, CANVAS_SIZE[0] - MARGIN, 860)
+    card_box = (MARGIN, 140, CANVAS_SIZE[0] - MARGIN, 860)
 
     # Drop shadow behind the card, for an elevated/layered look.
     shadow = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
@@ -168,8 +134,8 @@ def generate_post_image(text: str, output_path: str) -> None:
     bar_y = card_box[3] - 46
     draw.rounded_rectangle((start_x, bar_y, start_x + 70, bar_y + 6), radius=3, fill=accent_rgb)
 
-    # Signature row below the card -- initials badge + name + role, so every
-    # card in the series reads as the same consistent personal brand.
+    # Signature row below the card -- initials badge + "Follow Saad Ali", so
+    # every card in the series reads as the same consistent personal brand.
     badge_center = (MARGIN + 44, 932)
     badge_radius = 44
     draw.ellipse(
@@ -192,11 +158,16 @@ def generate_post_image(text: str, output_path: str) -> None:
         fill=(20, 20, 20),
     )
 
-    name_font = _load_font(FONT_BOLD_CANDIDATES, 36)
-    role_font = _load_font(FONT_REGULAR_CANDIDATES, 28)
+    follow_font = _load_font(FONT_BOLD_CANDIDATES, 36)
     text_x = badge_center[0] + badge_radius + 24
-    draw.text((text_x, badge_center[1] - 40), AUTHOR_NAME, font=name_font, fill=(255, 255, 255))
-    draw.text((text_x, badge_center[1] + 2), AUTHOR_ROLE, font=role_font, fill=(230, 230, 230))
+    follow_bbox = draw.textbbox((0, 0), FOLLOW_TEXT, font=follow_font)
+    follow_h = follow_bbox[3] - follow_bbox[1]
+    draw.text(
+        (text_x, badge_center[1] - follow_h / 2 - follow_bbox[1]),
+        FOLLOW_TEXT,
+        font=follow_font,
+        fill=(255, 255, 255),
+    )
 
     image.save(output_path, "PNG")
 

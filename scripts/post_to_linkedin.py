@@ -20,7 +20,7 @@ import tempfile
 
 import requests
 
-from content_pool import FOLLOW_CTAS, POSTS
+from content_pool import FOLLOW_CTA, POSTS
 from generate_image import generate_post_image
 
 STATE_DIR = os.path.join(os.path.dirname(__file__), "..", "state")
@@ -93,8 +93,7 @@ def main() -> None:
 
     post_index = read_index(POST_STATE_FILE) % len(POSTS)
     insight = POSTS[post_index]
-    cta = FOLLOW_CTAS[post_index % len(FOLLOW_CTAS)]
-    caption = f"{insight}\n\n{cta}"
+    caption = f"{insight}\n\n{FOLLOW_CTA}"
 
     asset_urn = None
     if want_image:

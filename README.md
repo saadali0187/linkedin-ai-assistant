@@ -4,14 +4,14 @@ Two independent automations, both using official/public APIs (no scraping,
 no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
 
 1. **`post_linkedin.yml`** — posts 2x/day to your LinkedIn feed via LinkedIn's
-   official Share API, rotating through pre-written, senior-voice frontend
-   engineering posts in `scripts/content_pool.py`. Each caption ends with a
-   "follow Saad Ali" call-to-action (rotated from `FOLLOW_CTAS` so it doesn't
-   read the same every time). Each post also gets a polished, on-brand image
-   card generated automatically from its text (`scripts/generate_image.py`)
-   — a gradient background, an elevated quote card, and a signature row
-   (initials badge + name + role) so the whole series looks like one
-   consistent personal brand — no manual artwork needed.
+   official Share API, rotating through pre-written, senior-voice posts in
+   `scripts/content_pool.py`. Each caption ends with "Follow Saad Ali"
+   (`FOLLOW_CTA`). Each post also gets a polished, on-brand image card
+   generated automatically from its text (`scripts/generate_image.py`) — one
+   consistent background color/gradient (`THEME`), an elevated quote card,
+   and a signature row (initials badge + "Follow Saad Ali") so the whole
+   series looks like one consistent personal brand — no manual artwork
+   needed.
 2. **`job_alert.yml`** — once a day, emails you a digest split into two
    sections: (a) Frontend Developer / JavaScript / HTML / CSS / C# / .NET /
    MS SQL jobs in Pakistan, and (b) camera/CCTV monitoring jobs, both in
@@ -96,10 +96,10 @@ waiting for the schedule.
 
 - **Post content**: edit `scripts/content_pool.py` — add/remove/reorder posts
   (`POSTS`) any time, the rotation just keeps going. The follow
-  call-to-action lines live in `FOLLOW_CTAS` in the same file.
-- **Post image branding**: `AUTHOR_NAME` / `AUTHOR_ROLE` / `AUTHOR_INITIALS` /
-  `KICKER_LABEL` at the top of `scripts/generate_image.py` control the name,
-  role, initials badge, and topic pill shown on every card.
+  call-to-action text lives in `FOLLOW_CTA` in the same file.
+- **Post image branding**: `AUTHOR_INITIALS` / `FOLLOW_TEXT` / `THEME` at the
+  top of `scripts/generate_image.py` control the initials badge, the
+  signature line, and the single background color used on every card.
 - **Post times**: edit the `cron` lines in `.github/workflows/post_linkedin.yml`
   (times are in UTC; PKT = UTC+5).
 - **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` (primary skills)

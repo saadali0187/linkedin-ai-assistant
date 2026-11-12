@@ -5,9 +5,9 @@ no "look how experienced I am" framing -- the authority comes from the take
 itself. Posts rotate in order (see post_to_linkedin.py); add more any time,
 the index just keeps advancing and wraps around when it runs out.
 
-Each published post gets one of FOLLOW_CTAS appended to the LinkedIn caption
-only -- the image card (generate_image.py) stays clean and renders just the
-insight, so the visual doesn't get cluttered with the call-to-action.
+Each published post gets FOLLOW_CTA appended to the LinkedIn caption only --
+the image card (generate_image.py) stays clean and renders just the insight
+plus a small "Follow Saad Ali" signature line, not the full caption text.
 """
 
 POSTS = [
@@ -43,8 +43,4 @@ POSTS = [
     "Leaving a clear PR description and a short 'why' comment on a tricky piece of logic is a small investment that pays the next engineer -- and often future you -- back tenfold.",
 ]
 
-FOLLOW_CTAS = [
-    "If this kind of take is useful, follow Saad Ali for more frontend engineering notes.",
-    "Follow Saad Ali if you want more of this frontend engineering perspective in your feed.",
-    "More breakdowns like this, every week -- follow Saad Ali.",
-]
+FOLLOW_CTA = "Follow Saad Ali"
