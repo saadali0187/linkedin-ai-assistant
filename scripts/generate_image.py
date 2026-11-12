@@ -1,11 +1,12 @@
 """Generates a branded quote-card PNG from a post's text, so every LinkedIn
 post can carry an image without any hand-picked artwork or paid image API.
 
-Style: one consistent gradient background with soft blurred accent shapes,
-a white elevated card (drop shadow) holding the insight, and a signature row
-(initials badge + "Follow Saad Ali") so every card reads as the same,
-consistent personal-brand series rather than a one-off quote image. Pillow
-only -- no 3D renderer / paid image API involved.
+Style: one consistent dark gradient background with soft blurred accent
+shapes, a dark elevated card (drop shadow, a lighter shade of the same
+background tone -- not white) holding the insight, and a plain "Follow Saad
+Ali" signature line in a shaded tint of the background color, so every card
+reads as the same consistent personal-brand series. Pillow only -- no 3D
+renderer / paid image API involved.
 """
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -13,10 +14,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 CANVAS_SIZE = (1080, 1080)
 MARGIN = 64
 CARD_RADIUS = 36
-CARD_COLOR = (255, 255, 255)
-TEXT_COLOR = (22, 26, 30)
 
-AUTHOR_INITIALS = "SA"
 FOLLOW_TEXT = "Follow Saad Ali"
 
 # Single fixed theme -- every card uses the same background so the series
@@ -27,11 +25,6 @@ FONT_BOLD_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     "C:/Windows/Fonts/arialbd.ttf",
-]
-FONT_REGULAR_CANDIDATES = [
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-    "C:/Windows/Fonts/arial.ttf",
 ]
 
 
@@ -47,6 +40,13 @@ def _load_font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont:
 def _hex_to_rgb(value: str) -> tuple[int, int, int]:
     value = value.lstrip("#")
     return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
+
+
+def _lighten(rgb: tuple[int, int, int], amount: float) -> tuple[int, int, int]:
+    """Blends rgb toward white by `amount` (0-1) -- used to derive on-brand
+    shades (card color, signature text) from the theme instead of plain
+    white/black."""
+    return tuple(int(c + (255 - c) * amount) for c in rgb)
 
 
 def _vertical_gradient(size: tuple[int, int], top_hex: str, bottom_hex: str) -> Image.Image:
@@ -79,6 +79,10 @@ def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFon
 
 def generate_post_image(text: str, output_path: str) -> None:
     accent_rgb = _hex_to_rgb(THEME["accent"])
+    bottom_rgb = _hex_to_rgb(THEME["bottom"])
+    card_color = _lighten(bottom_rgb, 0.16)  # elevated panel, same tone family -- not white
+    text_color = _lighten(bottom_rgb, 0.92)  # near-white but still tinted, for contrast on the dark card
+    follow_color = _lighten(bottom_rgb, 0.5)  # shaded tint of the background color itself
 
     background = _vertical_gradient(CANVAS_SIZE, THEME["top"], THEME["bottom"]).convert("RGBA")
 
@@ -104,9 +108,10 @@ def generate_post_image(text: str, output_path: str) -> None:
     shadow = shadow.filter(ImageFilter.GaussianBlur(28))
     background = Image.alpha_composite(background, shadow)
 
-    # The card itself, opaque and crisp on top of the shadow.
+    # The card itself, opaque and crisp on top of the shadow -- a lighter
+    # shade of the same background tone, not white.
     card_layer = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
-    ImageDraw.Draw(card_layer).rounded_rectangle(card_box, radius=CARD_RADIUS, fill=CARD_COLOR)
+    ImageDraw.Draw(card_layer).rounded_rectangle(card_box, radius=CARD_RADIUS, fill=card_color)
     background = Image.alpha_composite(background, card_layer)
 
     image = background.convert("RGB")
@@ -114,7 +119,7 @@ def generate_post_image(text: str, output_path: str) -> None:
 
     # Large decorative quote mark in the corner of the card.
     quote_font = _load_font(FONT_BOLD_CANDIDATES, 160)
-    draw.text((card_box[0] + 34, card_box[1] - 44), "\u201c", font=quote_font, fill=accent_rgb + (70,))
+    draw.text((card_box[0] + 34, card_box[1] - 44), "\u201c", font=quote_font, fill=accent_rgb)
 
     # Body text, centered vertically inside the card.
     inner_margin = 76
@@ -128,46 +133,16 @@ def generate_post_image(text: str, output_path: str) -> None:
     start_x = card_box[0] + inner_margin
 
     for i, line in enumerate(lines):
-        draw.text((start_x, start_y + i * line_height), line, font=body_font, fill=TEXT_COLOR)
+        draw.text((start_x, start_y + i * line_height), line, font=body_font, fill=text_color)
 
     # Small accent bar under the text.
     bar_y = card_box[3] - 46
     draw.rounded_rectangle((start_x, bar_y, start_x + 70, bar_y + 6), radius=3, fill=accent_rgb)
 
-    # Signature row below the card -- initials badge + "Follow Saad Ali", so
-    # every card in the series reads as the same consistent personal brand.
-    badge_center = (MARGIN + 44, 932)
-    badge_radius = 44
-    draw.ellipse(
-        (
-            badge_center[0] - badge_radius,
-            badge_center[1] - badge_radius,
-            badge_center[0] + badge_radius,
-            badge_center[1] + badge_radius,
-        ),
-        fill=accent_rgb,
-    )
-    initials_font = _load_font(FONT_BOLD_CANDIDATES, 34)
-    initials_bbox = draw.textbbox((0, 0), AUTHOR_INITIALS, font=initials_font)
-    initials_w = initials_bbox[2] - initials_bbox[0]
-    initials_h = initials_bbox[3] - initials_bbox[1]
-    draw.text(
-        (badge_center[0] - initials_w / 2, badge_center[1] - initials_h / 2 - initials_bbox[1]),
-        AUTHOR_INITIALS,
-        font=initials_font,
-        fill=(20, 20, 20),
-    )
-
-    follow_font = _load_font(FONT_BOLD_CANDIDATES, 36)
-    text_x = badge_center[0] + badge_radius + 24
-    follow_bbox = draw.textbbox((0, 0), FOLLOW_TEXT, font=follow_font)
-    follow_h = follow_bbox[3] - follow_bbox[1]
-    draw.text(
-        (text_x, badge_center[1] - follow_h / 2 - follow_bbox[1]),
-        FOLLOW_TEXT,
-        font=follow_font,
-        fill=(255, 255, 255),
-    )
+    # Signature line below the card -- just "Follow Saad Ali", tinted as a
+    # shade of the background color itself (no icon, no contrasting color).
+    follow_font = _load_font(FONT_BOLD_CANDIDATES, 38)
+    draw.text((MARGIN, 912), FOLLOW_TEXT, font=follow_font, fill=follow_color)
 
     image.save(output_path, "PNG")
 
