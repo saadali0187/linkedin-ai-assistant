@@ -5,12 +5,21 @@ only finds and lists matching jobs; you review and apply yourself.
 Sources:
     - Jooble              always on, free key required
     - JSearch (RapidAPI)   optional -- also surfaces LinkedIn/Indeed/Glassdoor,
-                           but needs a RAPIDAPI_KEY (free signup required,
-                           there is no key-less way to pull LinkedIn/Indeed
-                           listings short of scraping, which this project
-                           deliberately does not do)
+                           needs a RAPIDAPI_KEY (free signup required, there's
+                           no key-less way to pull LinkedIn/Indeed listings
+                           short of scraping, which this project deliberately
+                           does not do). RapidAPI retired JSearch's old
+                           GET /search in Oct 2026 in favor of /search-v2,
+                           which has been noticeably slower (~90s+ per
+                           request) -- failures here don't break the other
+                           sources, each call is wrapped in try/except.
     - RemoteOK             always on, free public API, no key needed
     - We Work Remotely     always on, free public RSS feed, no key needed
+
+Coverage note: RemoteOK/WWR are tech-remote-work boards, so they rarely (if
+ever) carry camera/CCTV monitoring listings -- that category leans on Jooble
+(and JSearch, if enabled) for real results. This is a coverage gap in what
+these free boards carry, not a bug.
 
 Searches two independent categories and lists each in its own section of the
 digest: your primary skill set, and camera/CCTV monitoring roles (both in
@@ -49,7 +58,9 @@ from html import unescape
 import requests
 
 JOOBLE_URL_TEMPLATE = "https://jooble.org/api/{key}"
-JSEARCH_URL = "https://jsearch.p.rapidapi.com/search"
+# JSearch retired GET /search in favor of /search-v2 (Oct 2026) -- the old
+# path now 404s with "Endpoint '/search' does not exist".
+JSEARCH_URL = "https://jsearch.p.rapidapi.com/search-v2"
 JSEARCH_HOST = "jsearch.p.rapidapi.com"
 REMOTEOK_URL = "https://remoteok.com/api"
 WWR_RSS_URL = "https://weworkremotely.com/categories/remote-programming-jobs.rss"
@@ -72,19 +83,24 @@ def fetch_jobs_jsearch(api_key: str, keywords: str, location: str) -> list[dict]
     response = requests.get(
         JSEARCH_URL,
         headers={"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": JSEARCH_HOST},
-        params={"query": query, "page": "1", "num_pages": "1"},
-        timeout=30,
+        params={"query": query, "num_pages": "1"},
+        # /search-v2 has been noticeably slower than the old endpoint since
+        # the Oct 2026 migration -- real responses have taken ~90s.
+        timeout=120,
     )
     response.raise_for_status()
     jobs = []
-    for item in response.json().get("data", []):
+    # /search-v2 nests results under data.jobs (the old /search returned a
+    # plain list directly under "data").
+    for item in response.json().get("data", {}).get("jobs", []):
+        location = item.get("job_location") or ", ".join(
+            part for part in (item.get("job_city"), item.get("job_country")) if part
+        )
         jobs.append(
             {
                 "title": item.get("job_title", "Untitled"),
                 "company": item.get("employer_name", "Unknown company"),
-                "location": ", ".join(
-                    part for part in (item.get("job_city"), item.get("job_country")) if part
-                ),
+                "location": location,
                 "link": item.get("job_apply_link") or item.get("job_google_link", ""),
             }
         )
