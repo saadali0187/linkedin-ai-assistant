@@ -8,17 +8,19 @@ no bots that violate LinkedIn's terms, no unsolicited auto-messaging):
    `scripts/content_pool.py`. Each caption ends with "Follow Saad Ali"
    (`FOLLOW_CTA`). Each post also gets a polished, on-brand image card
    generated automatically from its text (`scripts/generate_image.py`) — one
-   consistent background color/gradient (`THEME`), an elevated quote card,
-   and a signature row (initials badge + "Follow Saad Ali") so the whole
-   series looks like one consistent personal brand — no manual artwork
-   needed.
+   consistent dark background (`THEME`), an elevated card in a lighter shade
+   of that same tone (no white), and a "Follow Saad Ali" signature line
+   tinted as a shade of the background color — no manual artwork needed.
 2. **`job_alert.yml`** — once a day, emails you a digest split into two
    sections: (a) Frontend Developer / JavaScript / HTML / CSS / C# / .NET /
    MS SQL jobs in Pakistan, and (b) camera/CCTV monitoring jobs, both in
-   Pakistan and worldwide remote — via the Jooble API, and optionally the
-   JSearch API which also surfaces LinkedIn/Indeed/Glassdoor postings. No
-   auto-apply — you review the digest and apply (and send your own CV)
-   yourself.
+   Pakistan and worldwide remote. Pulls from four sources: Jooble and
+   RemoteOK and We Work Remotely (all free, no signup), plus optionally
+   JSearch (via RapidAPI) which additionally surfaces LinkedIn/Indeed/
+   Glassdoor/ZipRecruiter postings — JSearch needs a free `RAPIDAPI_KEY`
+   since there's no key-less way to pull LinkedIn/Indeed listings short of
+   scraping, which this project deliberately avoids. No auto-apply — you
+   review the digest and apply (and send your own CV) yourself.
 
 Both run on GitHub Actions, so your PC doesn't need to be on.
 
@@ -97,14 +99,16 @@ waiting for the schedule.
 - **Post content**: edit `scripts/content_pool.py` — add/remove/reorder posts
   (`POSTS`) any time, the rotation just keeps going. The follow
   call-to-action text lives in `FOLLOW_CTA` in the same file.
-- **Post image branding**: `AUTHOR_INITIALS` / `FOLLOW_TEXT` / `THEME` at the
-  top of `scripts/generate_image.py` control the initials badge, the
-  signature line, and the single background color used on every card.
+- **Post image branding**: `FOLLOW_TEXT` / `THEME` at the top of
+  `scripts/generate_image.py` control the signature line text and the
+  single background color used on every card.
 - **Post times**: edit the `cron` lines in `.github/workflows/post_linkedin.yml`
   (times are in UTC; PKT = UTC+5).
-- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` (primary skills)
-  and `CAMERA_JOB_KEYWORDS` / `CAMERA_JOB_LOCATIONS` (camera/CCTV monitoring)
-  in `.github/workflows/job_alert.yml`.
+- **Job search terms**: edit `JOB_KEYWORDS` / `JOB_LOCATIONS` (primary skills,
+  used by Jooble/JSearch) and `CAMERA_JOB_KEYWORDS` / `CAMERA_JOB_LOCATIONS`
+  (camera/CCTV monitoring) in `.github/workflows/job_alert.yml`. The
+  `FRONTEND_MATCH_KEYWORDS` / `CAMERA_MATCH_KEYWORDS` variables in the same
+  file control what counts as a relevant match on RemoteOK/We Work Remotely.
 
 ## Notes
 

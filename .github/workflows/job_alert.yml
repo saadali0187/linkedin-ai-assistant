@@ -26,6 +26,8 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           JOB_KEYWORDS: "Frontend Developer JavaScript HTML CSS C# .NET MS SQL"
           JOB_LOCATIONS: "Pakistan"
+          FRONTEND_MATCH_KEYWORDS: "frontend,javascript,html,css,react,c#,.net,asp.net,sql server,mssql"
           CAMERA_JOB_KEYWORDS: "CCTV Monitoring Camera Operator Remote Surveillance Security Monitoring"
           CAMERA_JOB_LOCATIONS: "Pakistan,Remote"
+          CAMERA_MATCH_KEYWORDS: "cctv,surveillance camera,security camera,camera operator,video surveillance,camera monitoring"
         run: python job_alert.py
